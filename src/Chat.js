@@ -8,14 +8,27 @@ import {
   InsertEmoticon,
   Mic as MicIcon,
 } from "@material-ui/icons";
+import { useParams } from "react-router-dom";
+import db from "./firebase";
 
 function Chat() {
-  const [seed, setSeed] = useState("");
   const [input, setInput] = useState("");
+  const { roomId } = useParams();
+  const { seed } = useParams();
+  const [roomName, setRoomName] = useState("");
 
   useEffect(() => {
-    setSeed(Math.floor(Math.random() * 5000));
-  }, []);
+    if (roomId) {
+      const unsubscribe = db
+        .collection("rooms")
+        .doc(roomId)
+        .onSnapshot((snapshot) => setRoomName(snapshot.data().name));
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [roomId]);
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -26,13 +39,20 @@ function Chat() {
   return (
     <div className="chat">
       <div className="chat__header">
-        <Avatar
-          src={`https://avatars.dicebear.com/api/avataaars/${seed}.svg`}
-        />
-        <div className="chat__headerInfo">
-          <h3>Room Name</h3>
-          <p>Last seen at ...</p>
-        </div>
+        {roomId ? (
+          <>
+            <Avatar
+              src={`https://avatars.dicebear.com/api/avataaars/${seed}.svg`}
+            />
+            <div className="chat__headerInfo">
+              <h3>{roomName}</h3>
+              <p>Last seen at ...</p>
+            </div>
+          </>
+        ) : (
+          <div className="chat__headerInfo"></div>
+        )}
+
         <div className="chat__headerRight">
           <IconButton>
             <SearchOutlined />
